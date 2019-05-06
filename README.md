@@ -1,18 +1,16 @@
-# mac (Whatsapp framework) 
-![Version](https://img.shields.io/badge/version-1.1.0-brightgreen.svg?style=flat-square)
-![Version](https://img.shields.io/badge/release-beta-green.svg?style=flat-square)
+# Yowsapp Framework 
+
 
 ###### Whatsapp blocks numbers now. Framework wont work properly until next version
 
-<!---[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=57RJJGH3HPCG6)-->
-Mac is a whatsapp bot/framework I made as a weekend project. The project itself has all you need to make your own custom bot easily.
+Yowsapp is a whatsapp bot/framework I made as a weekend project. The project itself has all you need to make your own custom bot easily.
 
-Mac has built-in human behavior so you only have to worry about the functions you make. Every module works completely separated from the core, this means that you can erease every module and mac will keep working
+Yowsapp has built-in human behavior so you only have to worry about the functions you make. Every module works completely separated from the core, this means that you can erease every module and mac will keep working
 
-_This needs **Python 3.5**_
+_This needs **Python >= 2.7 and <=3.7**_
 
 # Setup:
-1. Clone this repository (with submodules since it uses tgalal's yowsup library)
+1. Clone this repository (with submodules since it uses tgalal's yowsup3 library)
 ```sh
 > git clone https://github.com/danielcardeenas/whatsapp-framework.git
 ```
@@ -22,12 +20,7 @@ _This needs **Python 3.5**_
 ```
 
 3. Register your phone and get a password with like this:
-```sh
-# Replace CC with your country code (See https://countrycode.org)
-> yowsup-cli registration --requestcode sms --phone CCXXXXXXXX --cc CC -E android
-# After getting the sms code (in this example: 123456)
-> yowsup-cli registration --register 123456 --phone CCXXXXXXXX --cc CC -E android
-```
+`The process of registering the telephone line will be done within the execution of the file setup.sh`
 
 
 4. Open **config.py** and add set your credentials
@@ -89,8 +82,3 @@ The project is not submoduling yowsup now due to a lot of the modifications made
 <img src="https://i.imgur.com/pLiwAm5.png" width="253px" height="450px">
 <img src="https://i.imgur.com/poLpmAR.png" width="253px" height="450px">
 <img src="https://i.imgur.com/CRNKfHj.png" width="253px" height="450px">
-
-# Wiki
-[Read this](https://github.com/danielcardeenas/whatsapp-framework/wiki/Do-not-get-banned)
-
-###### **BTC**: 3FSCxDHnRKQvRJWPv4fcbLm37RemauTXRF
