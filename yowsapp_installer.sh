@@ -23,7 +23,7 @@ install_forked_yowsup() {
     cd libs/python-axolotl
     python3 setup.py -qqq install
     wait
-    cd ..
+    cd ../yowsup
     python3 setup.py install
     wait
     printf "${NC}--------------------------\n"
