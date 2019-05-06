@@ -5,10 +5,10 @@ import yowsup
 import platform
 import sys
 
-deps = ['python-dateutil', 'argparse', 'python-axolotl>=0.1.39', 'six', 'blinker', 'pillow']
+deps = ['consonance==0.1.2', 'argparse', 'python-axolotl>=0.1.39', 'six==1.10', 'appdirs', 'protobuf>=3.6.0']
 
-if sys.version_info < (2,7):
-    deps += ['importlib']
+if sys.version_info < (2, 7):
+    deps.append('importlib')
 
 if platform.system().lower() == "windows":
     deps.append('pyreadline')
@@ -19,17 +19,17 @@ else:
         deps.append('readline')
 
 setup(
-    name='yowsup2',
+    name='yowsup',
     version=yowsup.__version__,
-    url='http://github.com/danielcardeenas/yowsup/',
+    url='http://github.com/tgalal/yowsup/',
     license='GPL-3+',
-    author='Tarek Galal, Daniel Cardenas',
+    author='Tarek Galal',
     tests_require=[],
     install_requires = deps,
     scripts = ['yowsup-cli'],
     #cmdclass={'test': PyTest},
-    author_email='danielcardeenas@gmail.com',
-    description='A WhatsApp python library',
+    author_email='tare2.galal@gmail.com',
+    description='The WhatsApp lib',
     #long_description=long_description,
     packages= find_packages(),
     include_package_data=True,

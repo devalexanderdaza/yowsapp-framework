@@ -5,6 +5,7 @@ add.sh
 .9
 __pycache__
 
+build
 app/build/
 app/dist/
 app/mac_bot.egg-info/
@@ -15,7 +16,9 @@ cli.txt
 tags.txt
 
 # modules
-modules/broadcast/*
-modules/wolfram/*
-modules/yesno/*
-modules/elo/*
+libs/yowsup_/modules/broadcast/*
+libs/yowsup_/modules/wolfram/*
+libs/yowsup_/modules/yesno/*
+libs/yowsup_/modules/elo/*
+
+venv
