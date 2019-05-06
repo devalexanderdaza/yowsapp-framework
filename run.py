@@ -1,6 +1,6 @@
 import sys, logging, config
 
-from yowsup.layers.auth import AuthError
+# from yowsup.layers.auth import AuthError
 from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
 from yowsup.stacks import YowStackBuilder
 from yowsup.layers import YowLayerEvent
@@ -21,7 +21,7 @@ class MacStack(object):
         builder = YowStackBuilder()
 
         self.stack = builder\
-            .pushDefaultLayers(encryption)\
+            .pushDefaultLayers()\
             .push(MacLayer)\
             .build()
 
@@ -36,8 +36,8 @@ class MacStack(object):
 
         try:
             self.stack.loop(timeout=0.5, discrete=0.5)
-        except AuthError as e:
-            print("Auth Error, reason %s" % e)
+        # except AuthError as e:
+          #  print("Auth Error, reason %s" % e)
         except KeyboardInterrupt:
             print("\nYowsdown")
             sys.exit(0)

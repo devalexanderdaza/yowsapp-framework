@@ -1,4 +1,4 @@
-from yowsup.layers.network.dispatcher.dispatcher import YowConnectionDispatcher
+from yowsup.layers.network.dispatcher.dispatcher import *
 import asyncore
 import logging
 import socket

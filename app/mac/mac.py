@@ -11,7 +11,7 @@ from yowsup.layers.protocol_chatstate.protocolentities import *
 from yowsup.layers.protocol_media.protocolentities import *
 from yowsup.layers.protocol_media.mediauploader import MediaUploader
 from yowsup.common.tools import Jid
-from yowsup.common.optionalmodules import PILOptionalModule, AxolotlOptionalModule
+from yowsup.common.optionalmodules import PILOptionalModule
 from yowsup.layers.protocol_profiles.protocolentities import *
 from yowsup.layers.protocol_contacts.protocolentities import *
 

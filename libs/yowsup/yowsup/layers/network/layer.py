@@ -5,6 +5,7 @@ from yowsup.layers.network.dispatcher.dispatcher import YowConnectionDispatcher
 from yowsup.layers.network.dispatcher.dispatcher_socket import SocketConnectionDispatcher
 from yowsup.layers.network.dispatcher.dispatcher_asyncore import AsyncoreConnectionDispatcher
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,19 +13,19 @@ class YowNetworkLayer(YowLayer, ConnectionCallbacks):
     """This layer wraps a connection dispatcher that provides connection and a communication channel
     to remote endpoints. Unless explicitly configured, applications should not make assumption about
     the dispatcher being used as the default dispatcher could be changed across versions"""
-    EVENT_STATE_CONNECT         = "org.openwhatsapp.yowsup.event.network.connect"
-    EVENT_STATE_DISCONNECT      = "org.openwhatsapp.yowsup.event.network.disconnect"
-    EVENT_STATE_CONNECTED       = "org.openwhatsapp.yowsup.event.network.connected"
-    EVENT_STATE_DISCONNECTED    = "org.openwhatsapp.yowsup.event.network.disconnected"
+    EVENT_STATE_CONNECT = "org.openwhatsapp.yowsup.event.network.connect"
+    EVENT_STATE_DISCONNECT = "org.openwhatsapp.yowsup.event.network.disconnect"
+    EVENT_STATE_CONNECTED = "org.openwhatsapp.yowsup.event.network.connected"
+    EVENT_STATE_DISCONNECTED = "org.openwhatsapp.yowsup.event.network.disconnected"
 
-    PROP_ENDPOINT               = "org.openwhatsapp.yowsup.prop.endpoint"
-    PROP_NET_READSIZE           = "org.openwhatsapp.yowsup.prop.net.readSize"
-    PROP_DISPATCHER             = "org.openwhatsapp.yowsup.prop.net.dispatcher"
+    PROP_ENDPOINT = "org.openwhatsapp.yowsup.prop.endpoint"
+    PROP_NET_READSIZE = "org.openwhatsapp.yowsup.prop.net.readSize"
+    PROP_DISPATCHER = "org.openwhatsapp.yowsup.prop.net.dispatcher"
 
-    STATE_DISCONNECTED          = 0
-    STATE_CONNECTING            = 1
-    STATE_CONNECTED             = 2
-    STATE_DISCONNECTING         = 3
+    STATE_DISCONNECTED = 0
+    STATE_CONNECTING = 1
+    STATE_CONNECTED = 2
+    STATE_DISCONNECTING = 3
 
     DISPATCHER_SOCKET = 0
     DISPATCHER_ASYNCORE = 1
@@ -85,7 +86,7 @@ class YowNetworkLayer(YowLayer, ConnectionCallbacks):
         logger.info("Connecting to %s:%s" % endpoint)
         self._dispatcher.connect(endpoint)
 
-    def destroyConnection(self, reason = None):
+    def destroyConnection(self, reason=None):
         self.state = self.__class__.STATE_DISCONNECTING
         self._dispatcher.disconnect()
 
