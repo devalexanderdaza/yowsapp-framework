@@ -5,15 +5,11 @@ import shutil, os, logging
 
 from app.utils import helper
 from app.mac import mac, signals
-from app.receiver import receiver
 from app.models.message import Message
 from app.models.receipt import Receipt
 
 from yowsup.layers.interface import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.protocol_contacts.protocolentities import *
-from yowsup.layers.protocol_groups.protocolentities import *
-
-from yowsup.layers.protocol_media.mediadownloader import MediaDownloader
 
 '''
 Basic lifesycle
@@ -30,20 +26,20 @@ class MacLayer(YowInterfaceLayer):
     def on_success(self, success_entity):
         mac.set_entity(self)
         contacts = self.getProp(self.__class__.PROP_CONTACTS, [])
-        #print("Sync contacts sucess: " + helper.nice_list(contacts))
+        print("Sync contacts sucess: " + helper.nice_list(contacts))
         contact_entity = GetSyncIqProtocolEntity(contacts)
         self._sendIq(contact_entity, self.on_sync_result, self.on_sync_error)
         signals.initialized.send(self)
 
     def on_sync_result(self, result_sync_iq_entity, original_iq_entity):
         pass
-        #print("Sync result:")
-        #print(result_sync_iq_entity)
+        print("Sync result:")
+        print(result_sync_iq_entity)
 
     def on_sync_error(self, error_sync_iq_entity, original_iq_entity):
         pass
-        #print("Sync error:")
-        #print(error_sync_iq_entity)
+        print("Sync error:")
+        print(error_sync_iq_entity)
         
     
     @ProtocolEntityCallback("receipt")
@@ -55,12 +51,12 @@ class MacLayer(YowInterfaceLayer):
     @ProtocolEntityCallback("ack")
     def onAck(self, entity):
         pass
-        #helper.log(entity)
-        #formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
-        #print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
-        #if entity.getClass() == "message":
-            #print(entity.getId(), "Sent")
-            #self.notifyInputThread()
+        helper.log(entity)
+        formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
+        print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
+        if entity.getClass() == "message":
+            print(entity.getId(), "Sent")
+            self.notifyInputThread()
             
 
     @ProtocolEntityCallback("message")
