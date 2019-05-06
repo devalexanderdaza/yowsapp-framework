@@ -1,0 +1,21 @@
+commit.sh
+add.sh
+
+.idea/
+.9
+__pycache__
+
+app/build/
+app/dist/
+app/mac_bot.egg-info/
+app/assets/*
+config.py
+
+cli.txt
+tags.txt
+
+# modules
+modules/broadcast/*
+modules/wolfram/*
+modules/yesno/*
+modules/elo/*
