@@ -20,13 +20,15 @@ _This needs **Python >= 2.7 and <=3.7**_
 ```sh
 > sudo ./yowsapp_installer.sh
 ```
-4. Register your phone and get a password with like this:
+3. Register your phone and get a password with like this:
 `The process of registering the telephone line will be done within the execution of the file yowsapp_installer.sh`
+4. Save the login JSON response, rename **config_example.py** to **config.py**
+```sh
+> mv config_example.py config.py
+```
+5. Open **config.py** and add set your credentials
 
-
-4. Open **config.py** and add set your credentials
-
-5. Ready to go! (Now you can add your own whatsapp modules)
+6. Ready to go! (Now you can add your own whatsapp modules)
 ```sh
 > ./start.sh
 ```
