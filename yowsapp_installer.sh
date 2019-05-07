@@ -4,6 +4,19 @@ ORANGE='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+prepare_enviroment() {
+	printf "Prepare ${ORANGE}Linux Ubuntu Enviroment${NC}\n"
+    printf "${NC}--------------------------\n"
+	sudo apt update
+	wait
+	sudo apt install python -y && sudo apt install python-pip -y && sudo apt install python3 -y && sudo apt install python3-pip -y
+	wait
+	sudo apt-get install build-essential libssl-dev libffi-dev python-dev -y
+	wait
+	sudo pip install yowsup && sudo pip3 install yowsup && pip3 install pycrypto && pip3 install blinker
+	wait	
+}
+
 install_requirements() {
     module_requirements="$1"
 
@@ -20,11 +33,14 @@ install_requirements() {
 install_forked_yowsup() {
     printf "Installing ${ORANGE}yowsup libraries${NC}\n"
     printf "${NC}--------------------------\n"
-    cd libs/python-axolotl
+	cd libs/
+	sudo rm -R yowsup
+	wait
+	git clone https://github.com/tgalal/yowsup.git
+	wait
+	sudo python yowsup/setup.py install && sudo python3 yowsup/setup.py install
+    cd python-axolotl
     python3 setup.py -qqq install
-    wait
-    cd ../yowsup
-    python3 setup.py install
     wait
     printf "${NC}--------------------------\n"
     # Return to root
@@ -88,6 +104,9 @@ install_app_dependencies() {
     install_requirements "$app_requirements"
     wait
 }
+
+# Steep 0
+prepare_enviroment
 
 # Steep 1
 install_forked_yowsup
