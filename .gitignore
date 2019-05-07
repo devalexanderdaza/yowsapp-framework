@@ -11,6 +11,7 @@ app/dist/
 app/mac_bot.egg-info/
 app/assets/*
 config.py
+whatsapp_login.sh
 
 cli.txt
 tags.txt
