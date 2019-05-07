@@ -14,13 +14,13 @@ _This needs **Python >= 2.7 and <=3.7**_
 ```sh
 > git clone https://github.com/danielcardeenas/whatsapp-framework.git
 ```
-2. Run setup.sh (Most likely on sudo since its going to install some libraries)
+2. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
 ```sh
-> sudo ./setup.sh
+> sudo ./yowsapp_installer.sh
 ```
 
 3. Register your phone and get a password with like this:
-`The process of registering the telephone line will be done within the execution of the file setup.sh`
+`The process of registering the telephone line will be done within the execution of the file yowsapp_installer.sh`
 
 
 4. Open **config.py** and add set your credentials
