@@ -7,6 +7,8 @@ Yowsapp is a whatsapp bot/framework I made as a weekend project. The project its
 
 Yowsapp has built-in human behavior so you only have to worry about the functions you make. Every module works completely separated from the core, this means that you can erease every module and mac will keep working
 
+_**NOTE: I highly recommend making use of the library in a completely clean linux environment. My recommendation would be to use a Digital Ocean VPS here: https://m.do.co/c/ec1e4f467265 **_
+
 _This needs **Python >= 2.7 and <=3.7**_
 
 # Setup:
@@ -14,17 +16,7 @@ _This needs **Python >= 2.7 and <=3.7**_
 ```sh
 > git clone https://github.com/devalexanderdaza/yowsapp-framework.git
 ```
-2. Install required dependencies
-For Debian and Ubuntu
-```sh
-> sudo apt-get install build-essential libssl-dev libffi-dev python-dev
-```
-For Fedora and RHEL-derivatives
-```sh
-> sudo yum install gcc libffi-devel python-devel openssl-devel
-```
-
-3. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
+2. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
 ```sh
 > sudo ./yowsapp_installer.sh
 ```
