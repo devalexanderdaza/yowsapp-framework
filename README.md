@@ -12,14 +12,23 @@ _This needs **Python >= 2.7 and <=3.7**_
 # Setup:
 1. Clone this repository (with submodules since it uses tgalal's yowsup3 library)
 ```sh
-> git clone https://github.com/danielcardeenas/whatsapp-framework.git
+> git clone https://github.com/devalexanderdaza/yowsapp-framework.git
 ```
-2. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
+2. Install required dependencies
+For Debian and Ubuntu
+```sh
+> sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+```
+For Fedora and RHEL-derivatives
+```sh
+> sudo yum install gcc libffi-devel python-devel openssl-devel
+```
+
+3. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
 ```sh
 > sudo ./yowsapp_installer.sh
 ```
-
-3. Register your phone and get a password with like this:
+4. Register your phone and get a password with like this:
 `The process of registering the telephone line will be done within the execution of the file yowsapp_installer.sh`
 
 
