@@ -1,6 +1,6 @@
 import os
 
-from yowsup.layers.protocol_media.mediadownloader import MediaDownloader
+# from yowsup.layers.protocol_media.mediadownloader import MediaDownloader
 from app.utils import helper
 from app.utils import media_decrypter
 
@@ -26,7 +26,7 @@ Downloads enc from url from message_entity and returns its path
 """
 def download_enc(message_entity):
     url = message_entity.getMediaUrl()
-    return MediaDownloader().download(url.decode('ASCII'))
+    #return MediaDownloader().download(url.decode('ASCII'))
     
     
 """
