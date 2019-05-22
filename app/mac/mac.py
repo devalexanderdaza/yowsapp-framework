@@ -275,7 +275,7 @@ def on_request_upload_result(self, jid, media_type, file_path, result_request_up
                                                           file_path,
                                                           jid,
                                                           result_request_upload_entity.getResumeOffset()),
-                                       async=True)
+                                       True)
         media_uploader.start()
 
 
