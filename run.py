@@ -4,14 +4,16 @@ from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
 from yowsup.stacks import YowStackBuilder
 from yowsup.layers import YowLayerEvent
 from yowsup.layers.network import YowNetworkLayer
+from consonance.structs.keypair import KeyPair
+import base64
 
 from app.layer import MacLayer
 
 # Uncomment to log
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Config
-credentials = (config.credentials['phone'], config.credentials['password'])
+credentials = config.credentials['phone'], KeyPair.from_bytes(base64.b64decode(config.credentials['password']))
 encryption = True
 
 
