@@ -119,7 +119,7 @@ def log(message_entity):
 Returns predicate of the message
 """
 def message(message):
-    message = clean_message(message)
+    # message = clean_message(message)
     if is_command(message):
         return message[1:]
     else:
