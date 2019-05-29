@@ -16,7 +16,7 @@ class BotRequest(object):
     def run(self):
         try:
             message = self.message
-            mac.send_message(message.message, message.conversation)
+            mac.send_message("Mensaje recibido: " + message.message, message.conversation)
             # requests.post('http://localhost:3001/paymentbot/whatsappwebhook', json={'event': 'INBOX', 'from': message.who, 'name': message.who_name, 'conversation': message.conversation, 'text': message.text, 'AppClient': 'Yowsup'})
         except Exception as e:
             print(e)
