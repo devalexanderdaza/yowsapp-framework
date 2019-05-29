@@ -68,17 +68,9 @@ class MacLayer(YowInterfaceLayer):
 
         if message_entity.getType() == 'text':
             self.onTextMessage(message_entity)
-        # elif message_entity.getType() == 'media':
-        #     self.onMediaMessage(message_entity)
-        
-        # Make message
-        message = Message(message_entity)
-        if message.valid:
-            signals.message_received.send(message)
-            if helper.is_command(message.message):
-                signals.command_received.send(message)
-            
-        mac.disconnect(self)
+        elif message_entity.getType() == 'media':
+            # self.onMediaMessage(message_entity)
+            mac.disconnect(self)
             
     def send_message_signal(self, message_entity):
         message = Message(message_entity)
