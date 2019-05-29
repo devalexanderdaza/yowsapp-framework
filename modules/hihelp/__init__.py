@@ -1,23 +1,33 @@
-# import threading
-# import requests
-# from app.mac import mac, signals
+import threading
+from app.mac import mac, signals
 
-# @signals.message_received.connect
-# def handle(message):
-#     BotRequest(message)
-#
-# class BotRequest(object):
-#     def __init__(self, msg):
-#         self.message = msg
-#         thread = threading.Thread(target=self.run, args=())
-#         thread.daemon = True
-#         thread.start()
-#
-#     def run(self):
-#         try:
-#             message = self.message
-#             mac.send_message("Hello", message.conversation)
-#             # requests.post('http://localhost:3001/paymentbot/whatsappwebhook', json={'event': 'INBOX', 'from': message.who, 'name': message.who_name, 'conversation': message.conversation, 'text': message.text, 'AppClient': 'Yowsup'})
-#         except Exception as e:
-#             print(e)
-#             print("Error sending Orchestrator Request")
+'''
+Signals this module listents to:
+1. When a message is received (signals.command_received)
+==========================================================
+'''
+
+
+@signals.command_received.connect
+def handle(message):
+    if message.command == "hi":
+        hi(message)
+    elif message.command == "help":
+        help(message)
+
+
+'''
+Actual module code
+==========================================================
+'''
+
+
+def hi(message):
+    who_name = message.who_name
+    answer = "Hi " + who_name
+    mac.send_message(answer, message.conversation)
+
+
+def help(message):
+    answer = "*Bot called Rabbiot* \nYowsapp framework made in Python \n*Version:* 1.0.0 \n*Status:* Beta \nhttps://github.com/devalexanderdaza/yowsapp-framework \n"
+    mac.send_message(answer, message.conversation)

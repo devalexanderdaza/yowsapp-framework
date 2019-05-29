@@ -7,7 +7,7 @@ from app.utils import helper
 from app.mac import mac, signals
 from app.models.message import Message
 from app.models.receipt import Receipt
-import modules
+from modules import hihelp
 
 from yowsup.layers.interface import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.protocol_contacts.protocolentities import *
