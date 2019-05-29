@@ -65,6 +65,11 @@ class MacLayer(YowInterfaceLayer):
         print(" ->>>>>> MESSAGE RECEIVED!!!!!!")
         # Set received (double v) and add to ack queue
         mac.receive_message(self, message_entity)
+
+        if message_entity.getType() == 'text':
+            self.onTextMessage(message_entity)
+        # elif message_entity.getType() == 'media':
+        #     self.onMediaMessage(message_entity)
         
         # Make message
         message = Message(message_entity)
@@ -83,6 +88,19 @@ class MacLayer(YowInterfaceLayer):
 
     def send_message(text, conversation):
         mac.send_message(text, conversation)
+
+    def onTextMessage(self, messageProtocolEntity):
+        # just print info
+        print(" ->>>>>> TEXT MESSAGE RECEIVED!!!!!!")
+
+        # Make message
+        message = Message(messageProtocolEntity)
+        if message.valid:
+            signals.message_received.send(message)
+            if helper.is_command(message.message):
+                signals.command_received.send(message)
+
+        mac.disconnect(self)
 
 '''
 Just ignore everything above 
