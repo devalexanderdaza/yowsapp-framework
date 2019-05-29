@@ -13,7 +13,7 @@ prepare_enviroment() {
 	wait
 	sudo apt-get install build-essential libssl-dev libffi-dev python-dev -y
 	wait
-	sudo pip install yowsup && sudo pip3 install yowsup && pip install pycrypto && pip install blinker && pip3 install pycrypto && pip3 install blinker && pip install cryptography==2.6.1 && pip3 install cryptography==2.6.1
+	sudo pip install yowsup && sudo pip3 install yowsup && pip install pycrypto && pip install blinker && pip3 install pycrypto && pip3 install blinker && pip install cryptography==2.6.1 && pip3 install cryptography==2.6.1 && pip install flask && sudo pip3 install flask
 	wait	
 }
 
