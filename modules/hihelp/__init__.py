@@ -16,7 +16,8 @@ class BotRequest(object):
     def run(self):
         try:
             message = self.message
-            requests.post('http://localhost:3001/paymentbot/whatsappwebhook', json={'event': 'INBOX', 'from': message.who, 'name': message.who_name, 'conversation': message.conversation, 'text': message.text, 'AppClient': 'Yowsup'})
+            mac.send_message("Hello", message.conversation)
+            # requests.post('http://localhost:3001/paymentbot/whatsappwebhook', json={'event': 'INBOX', 'from': message.who, 'name': message.who_name, 'conversation': message.conversation, 'text': message.text, 'AppClient': 'Yowsup'})
         except Exception as e:
             print(e)
             print("Error sending Orchestrator Request")
