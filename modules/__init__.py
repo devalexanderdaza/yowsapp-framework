@@ -1,0 +1,1 @@
+from modules.hihelp import hihelp
