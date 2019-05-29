@@ -1,5 +1,7 @@
 # -*- coding utf-8 -*-
 
+import app
+
 from app.utils import helper
 from app.mac import mac, signals
 from app.models.message import Message
