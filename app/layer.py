@@ -7,6 +7,7 @@ from app.utils import helper
 from app.mac import mac, signals
 from app.models.message import Message
 from app.models.receipt import Receipt
+from modules import hihelp
 
 from yowsup.layers.interface import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.protocol_contacts.protocolentities import *
@@ -52,15 +53,16 @@ class MacLayer(YowInterfaceLayer):
     def onAck(self, entity):
         pass
         helper.log(entity)
-        formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
-        print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
+        #formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
+        #print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
         if entity.getClass() == "message":
             print(entity.getId(), "Sent")
-            self.notifyInputThread()
+            #self.notifyInputThread()
             
 
     @ProtocolEntityCallback("message")
     def on_message(self, message_entity):
+        print(" ->>>>>> MESSAGE RECEIVED!!!!!!")
         # Set received (double v) and add to ack queue
         mac.receive_message(self, message_entity)
         
@@ -78,6 +80,9 @@ class MacLayer(YowInterfaceLayer):
         signals.message_received.send(message)
         if helper.is_command(message.message):
             signals.command_received.send(message)
+
+    def send_message(text, conversation):
+        mac.send_message(text, conversation)
 
 '''
 Just ignore everything above 
