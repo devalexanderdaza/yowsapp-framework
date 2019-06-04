@@ -120,6 +120,7 @@ Returns predicate of the message
 """
 def message(message):
     # message = clean_message(message)
+    message = message.conversation
     if is_command(message):
         return message[1:]
     else:
