@@ -1,7 +1,8 @@
 # Yowsapp Framework 
 
 
-###### Whatsapp blocks numbers now. Framework wont work properly until next version
+
+###### [DONATE HERE](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=55HW9CL6HLWGS&source=url)
 
 Yowsapp is a whatsapp bot/framework I made as a weekend project. The project itself has all you need to make your own custom bot easily.
 
