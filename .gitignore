@@ -9,6 +9,8 @@ libs/yowsup.egg-info/
 libs/build/
 
 # modules
-modules/misdatos/
+modules/misdatos
+
+
 
 venv

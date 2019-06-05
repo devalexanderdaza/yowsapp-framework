@@ -4,29 +4,6 @@ ORANGE='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-assistant() {
-    printf "Prepare ${ORANGE}Yowsapp Installer Assistant${NC}\n"
-    printf "${NC}--------------------------\n"
-    printf "${NC}Select the option that best suits your needs: \n"
-    printf "${CYAN}1. ${NC}Install Yowsapp Framework: \n"
-    printf "${CYAN}2. ${NC}Full Update Yowsapp Framework: \n"
-    printf "${CYAN}3. ${NC}Register new Whatsapp Phone on Yowsapp Framework: \n"
-    read -p "${CYAN}Insert your option: " installOption
-    if [ $installOption == 1 ]
-    then
-        fullYowsappInstall
-    fi
-    if [ $installOption == 2 ]
-    then
-        updateYowsapp
-    fi
-    if [ $installOption == 3 ]
-    then
-        loginWhatsapp
-    fi
-    wait
-}
-
 prepare_enviroment() {
 	printf "Prepare ${ORANGE}Linux Ubuntu Enviroment${NC}\n"
     printf "${NC}--------------------------\n"
@@ -58,10 +35,6 @@ install_forked_yowsup() {
     printf "${NC}--------------------------\n"
 	cd libs/
 	sudo rm -R yowsup
-	wait
-	sudo rm -R yowsup.egg-info
-	wait
-	sudo rm -R build
 	wait
 	git clone https://github.com/tgalal/yowsup.git
 	wait
@@ -132,29 +105,17 @@ install_app_dependencies() {
     wait
 }
 
-fullYowsappInstall () {
-    prepare_enviroment
+# Steep 0
+prepare_enviroment
 
-    install_forked_yowsup
+# Steep 1
+install_forked_yowsup
 
-    install_modules
+# Steep 2
+install_modules
 
-    install_app_dependencies
+# Steep 3
+install_app_dependencies
 
-    whatsapp_login
-}
-
-updateYowsapp () {
-    install_forked_yowsup
-
-    install_modules
-
-    install_app_dependencies
-}
-
-loginWhatsapp () {
-    whatsapp_login
-}
-
-
-assistant
+# Steep 4
+whatsapp_login
