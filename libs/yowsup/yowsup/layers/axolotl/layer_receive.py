@@ -21,6 +21,7 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
         self.sessionCiphers = {}
         self.groupCiphers = {}
         self.pendingIncomingMessages = {} #(jid, participantJid?) => message
+        self._retries = {}
 
     def receive(self, protocolTreeNode):
         """
@@ -33,20 +34,6 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
                 #receipts will be handled by send layer
                 self.toUpper(protocolTreeNode)
 
-            # elif protocolTreeNode.tag == "iq":
-            #     if protocolTreeNode.getChild("encr_media"):
-            #         protocolTreeNode.addChild("media", {
-            #             "url": protocolTreeNode["url"],
-            #             "ip": protocolTreeNode["ip"],
-            #         })
-            #         self.toUpper(protocolTreeNode)
-            #         return
-
-    ######
-
-    def onEncrMediaResult(self, resultNode):
-        pass
-
     def processPendingIncomingMessages(self, jid, participantJid = None):
         conversationIdentifier = (jid, participantJid)
         if conversationIdentifier in self.pendingIncomingMessages:
@@ -54,8 +41,6 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
                 self.onMessage(messageNode)
 
             del self.pendingIncomingMessages[conversationIdentifier]
-
-    ##### handling received data #####
 
     def onMessage(self, protocolTreeNode):
         encNode = protocolTreeNode.getChild("enc")
@@ -77,10 +62,15 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
                 self.handleWhisperMessage(node)
             if encMessageProtocolEntity.getEnc(EncProtocolEntity.TYPE_SKMSG):
                 self.handleSenderKeyMessage(node)
-        except (exceptions.InvalidMessageException, exceptions.InvalidKeyIdException) as e:
-            logger.warning("InvalidMessage or KeyId for %s, going to send a retry", encMessageProtocolEntity.getAuthor(False))
-            retry = RetryOutgoingReceiptProtocolEntity.fromMessageNode(node, self.manager.registration_id)
-            self.toLower(retry.toProtocolTreeNode())
+
+            self.reset_retries(node["id"])
+
+        except exceptions.InvalidKeyIdException:
+            logger.warning("Invalid KeyId for %s, going to send a retry", encMessageProtocolEntity.getAuthor(False))
+            self.send_retry(node, self.manager.registration_id)
+        except exceptions.InvalidMessageException:
+            logger.warning("InvalidMessage for %s, going to send a retry", encMessageProtocolEntity.getAuthor(False))
+            self.send_retry(node, self.manager.registration_id)
         except exceptions.NoSessionException:
             logger.warning("No session for %s, getting their keys now", encMessageProtocolEntity.getAuthor(False))
 
@@ -94,7 +84,8 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
 
             self.getKeysFor([senderJid], successFn)
         except exceptions.DuplicateMessageException:
-            logger.warning("Received a message that we've previously decrypted, goint to send the delivery receipt myself")
+            logger.warning("Received a message that we've previously decrypted, "
+                           "going to send the delivery receipt myself")
             self.toLower(OutgoingReceiptProtocolEntity(node["id"], node["from"], participant=node["participant"]).toProtocolTreeNode())
 
         except UntrustedIdentityException as e:
@@ -144,27 +135,15 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
                 participantid=encMessageProtocolEntity.getParticipant(False),
                 data=enc.getData()
             )
-            plaintext = plaintext.encode() if sys.version_info >= (3, 0) else plaintext
             self.parseAndHandleMessageProto(encMessageProtocolEntity, plaintext)
 
             node = encMessageProtocolEntity.toProtocolTreeNode()
             node.addChild((ProtoProtocolEntity(plaintext, enc.getMediaType())).toProtocolTreeNode())
 
             self.toUpper(node)
-
         except exceptions.NoSessionException:
             logger.warning("No session for %s, going to send a retry", encMessageProtocolEntity.getAuthor(False))
-            retry = RetryOutgoingReceiptProtocolEntity.fromMessageNode(node, self.manager.registration_id)
-            self.toLower(retry.toProtocolTreeNode())
-        except exceptions.DuplicateMessageException:
-            logger.warning(
-                "Received a message that we've previously decrypted, goint to send the delivery receipt myself"
-            )
-            self.toLower(
-                OutgoingReceiptProtocolEntity(
-                    node["id"], node["from"], participant=node["participant"]
-                ).toProtocolTreeNode()
-            )
+            self.send_retry(node, self.manager.registration_id)
 
     def parseAndHandleMessageProto(self, encMessageProtocolEntity, serializedData):
         m = Message()
@@ -174,10 +153,9 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             print("DUMP:")
             print(serializedData)
             print([s for s in serializedData])
-            # print([ord(s) for s in serializedData])
             raise
         if not m or not serializedData:
-            raise ValueError("Empty message")
+            raise exceptions.InvalidMessageException()
 
         if m.HasField("sender_key_distribution_message"):
             self.handleSenderKeyDistributionMessage(
@@ -193,4 +171,18 @@ class AxolotlReceivelayer(AxolotlBaseLayer):
             skmsgdata=senderKeyDistributionMessage.axolotl_sender_key_distribution_message
         )
 
+    def send_retry(self, message_node, registration_id):
+        message_id = message_node["id"]
+        if message_id in self._retries:
+            count = self._retries[message_id]
+            count += 1
+        else:
+            count = 1
+        self._retries[message_id] = count
+        retry = RetryOutgoingReceiptProtocolEntity.fromMessageNode(message_node, registration_id)
+        retry.count = count
+        self.toLower(retry.toProtocolTreeNode())
 
+    def reset_retries(self, message_id):
+        if message_id in self._retries:
+            del self._retries[message_id]

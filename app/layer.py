@@ -84,6 +84,7 @@ class MacLayer(YowInterfaceLayer):
     def onTextMessage(self, messageProtocolEntity):
         # just print info
         print(" ->>>>>> TEXT MESSAGE RECEIVED!!!!!!")
+        print(messageProtocolEntity)
 
         # Make message
         message = Message(messageProtocolEntity)

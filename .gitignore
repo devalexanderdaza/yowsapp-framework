@@ -11,15 +11,14 @@ app/dist/
 app/mac_bot.egg-info/
 app/assets/*
 config.py
-whatsapp_login.sh
+libs/yowsup/
+libs/yowsup.egg-info/
+libs/build/
 
 cli.txt
 tags.txt
 
 # modules
-libs/yowsup_/modules/broadcast/*
-libs/yowsup_/modules/wolfram/*
-libs/yowsup_/modules/yesno/*
-libs/yowsup_/modules/elo/*
+modules/misdatos/
 
 venv
