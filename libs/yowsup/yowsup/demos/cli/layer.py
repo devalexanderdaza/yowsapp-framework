@@ -1,11 +1,11 @@
 from .cli import Cli, clicmd
 from yowsup.layers.interface import YowInterfaceLayer, ProtocolEntityCallback
-from yowsup.layers.auth import YowAuthenticationProtocolLayer
 from yowsup.layers import YowLayerEvent, EventCallback
 from yowsup.layers.network import YowNetworkLayer
 import sys
 from yowsup.common import YowConstants
 import datetime
+import time
 import os
 import logging
 import threading
@@ -34,7 +34,7 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     EVENT_START             = "org.openwhatsapp.yowsup.event.cli.start"
     EVENT_SENDANDEXIT       = "org.openwhatsapp.yowsup.event.cli.sendandexit"
 
-    MESSAGE_FORMAT          = "[{FROM}({TIME})]:[{MESSAGE_ID}]\t {MESSAGE}"
+    MESSAGE_FORMAT          = "[%s(%s)]:[%s]\t %s"
 
     FAIL_OPT_PILLOW         = "No PIL library installed, try install pillow"
     FAIL_OPT_AXOLOTL        = "axolotl is not installed, try install python-axolotl"
@@ -53,7 +53,6 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         self.sendReceipts = True
         self.sendRead = True
         self.disconnectAction = self.__class__.DISCONNECT_ACTION_PROMPT
-        self.credentials = None
 
         #add aliases to make it user to use commands. for example you can then do:
         # /message send foobar "HI"
@@ -75,22 +74,9 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
                 return alias
         return jid
 
-    def setCredentials(self, username, keypair):
-        self.getLayerInterface(YowAuthenticationProtocolLayer).setCredentials(username, keypair)
-
-        return "%s@s.whatsapp.net" % username
-
     @EventCallback(EVENT_START)
     def onStart(self, layerEvent):
         self.startInput()
-        return True
-
-    @EventCallback(EVENT_SENDANDEXIT)
-    def onSendAndExit(self, layerEvent):
-        credentials = layerEvent.getArg("credentials")
-        target = layerEvent.getArg("target")
-        message = layerEvent.getArg("message")
-        self.sendMessageAndDisconnect(credentials, target, message)
         return True
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
@@ -108,15 +94,6 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         else:
             self.output("Not connected", tag = "Error", prompt = False)
             return False
-
-    #### batch cmds #####
-    def sendMessageAndDisconnect(self, credentials, jid, message):
-        self.disconnectAction = self.__class__.DISCONNECT_ACTION_EXIT
-        self.queueCmd("/login %s %s" % credentials)
-        self.queueCmd("/message send %s \"%s\" wait" % (jid, message))
-        self.queueCmd("/disconnect")
-        self.startInput()
-
 
     ########## PRESENCE ###############
     @clicmd("Set presence name")
@@ -366,7 +343,7 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     @clicmd("Send message to a friend")
     def message_send(self, number, content):
         if self.assertConnected():
-            outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8") if sys.version_info >= (3,0) else content, to = self.aliasToJid(number))
+            outgoingMessage = TextMessageProtocolEntity(content, to=self.aliasToJid(number))
             self.toLower(outgoingMessage)
 
     @clicmd("Broadcast message. numbers should comma separated phone numbers")
@@ -404,7 +381,6 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
             errorFn = lambda errorEntity, originalEntity: self.onRequestUploadError(jid, path, errorEntity, originalEntity)
             self._sendIq(entity, successFn, errorFn)
 
-            self._sendIq(entity, successFn, errorFn)
     @clicmd("Send typing state")
     def state_typing(self, jid):
         if self.assertConnected():
@@ -413,9 +389,21 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
 
     @clicmd("Request contacts statuses")
     def statuses_get(self, contacts):
+
+        def on_success(entity, original_iq_entity):
+            # type: (ResultStatusesIqProtocolEntity, GetStatusesIqProtocolEntity) -> None
+            status_outs = []
+            for jid, status_info in entity.statuses.items():
+                status_outs.append("[user=%s status=%s last_updated=%s]" % (jid, status_info[0], status_info[1]))
+            self.output("\n".join(status_outs), tag="statuses_get result")
+
+        def on_error(entity, original_iq):
+            # type: (ResultStatusesIqProtocolEntity, GetStatusesIqProtocolEntity) -> None
+            logger.error("Failed to get statuses")
+
         if self.assertConnected():
             entity = GetStatusesIqProtocolEntity([self.aliasToJid(c) for c in contacts.split(',')])
-            self.toLower(entity)
+            self._sendIq(entity, on_success, on_error)
 
     @clicmd("Send paused state")
     def state_paused(self, jid):
@@ -443,14 +431,27 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         return True
 
     ######## receive #########
-
+    
+    @ProtocolEntityCallback("presence")
+    def onPresenceChange(self, entity):
+        status="offline"
+        if entity.getType() is None:
+            status="online"     
+        ##raw fix for iphone lastseen deny output
+        lastseen = entity.getLast()
+        if status is "offline" and lastseen is "deny":
+            lastseen = time.time()
+        ##
+        self.output("%s %s %s lastseen at: %s" % (entity.getFrom(), entity.getTag(), status, lastseen))
+        
     @ProtocolEntityCallback("chatstate")
     def onChatstate(self, entity):
         print(entity)
 
     @ProtocolEntityCallback("iq")
     def onIq(self, entity):
-        print(entity)
+        if not isinstance(entity, ResultStatusesIqProtocolEntity):  # already printed somewhere else
+            print(entity)
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
@@ -497,27 +498,25 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
 
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%d-%m-%Y %H:%M')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (message.getParticipant(False), message.getFrom())
-        output = self.__class__.MESSAGE_FORMAT.format(
-            FROM = sender,
-            TIME = formattedDate,
-            MESSAGE = messageOut.encode('latin-1').decode() if sys.version_info >= (3, 0) else messageOut,
-            MESSAGE_ID = message.getId()
-            )
+
+        output = self.__class__.MESSAGE_FORMAT % (sender, formattedDate, message.getId(), messageOut)
 
         self.output(output, tag = None, prompt = not self.sendReceipts)
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
             self.output("Sent delivered receipt"+" and Read" if self.sendRead else "", tag = "Message %s" % message.getId())
 
-
     def getTextMessageBody(self, message):
-        return message.getBody()
+        if isinstance(message, TextMessageProtocolEntity):
+            return message.conversation
+        elif isinstance(message, ExtendedTextMessageProtocolEntity):
+            return str(message.message_attributes.extended_text)
+        else:
+            raise NotImplementedError()
 
     def getMediaMessageBody(self, message):
-        if message.media_type in ("image", "audio", "video", "document"):
-            return self.getDownloadableMediaMessageBody(message)
-        else:
-            return "[Media Type: %s]" % message.media_type
+        # type: (DownloadableMediaMessageProtocolEntity) -> str
+        return str(message.message_attributes)
 
     def getDownloadableMediaMessageBody(self, message):
         return "[media_type={media_type}, length={media_size}, url={media_url}, key={media_key}]".format(

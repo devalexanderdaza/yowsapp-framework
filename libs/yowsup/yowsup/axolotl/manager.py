@@ -61,12 +61,13 @@ class AxolotlManager(object):
 
     def level_prekeys(self, force=False):
         logger.debug("level_prekeys(force=%s)" % force)
-        pending_prekeys = self._store.loadPreKeys()
-        logger.debug("len(pending_prekeys) = %d" % len(pending_prekeys))
-        if force or len(pending_prekeys) < self.THRESHOLD_REGEN:
-            count_gen = self.COUNT_GEN_PREKEYS - len(pending_prekeys)
-            logger.info("Generating %d prekeys" % count_gen)
-            prekeys = KeyHelper.generatePreKeys(KeyHelper.getRandomSequence(), count_gen)
+        len_pending_prekeys = len(self._store.loadPreKeys())
+        logger.debug("len(pending_prekeys) = %d" % len_pending_prekeys)
+        if force or len_pending_prekeys < self.THRESHOLD_REGEN:
+            count_gen = self.COUNT_GEN_PREKEYS
+            max_prekey_id = self._store.preKeyStore.loadMaxPreKeyId()
+            logger.info("Generating %d prekeys, current max_prekey_id=%d" % (count_gen, max_prekey_id))
+            prekeys = KeyHelper.generatePreKeys(max_prekey_id + 1, count_gen)
             logger.info("Storing %d prekeys" % len(prekeys))
             for i in range(0, len(prekeys)):
                 key = prekeys[i]
@@ -136,9 +137,9 @@ class AxolotlManager(object):
         return group_cipher
 
     def _generate_random_padding(self):
-        logger.debug("generate_random_adding")
+        logger.debug("generate_random_padding")
         num = random.randint(1,255)
-        return bytearray([num] * num)
+        return bytes(bytearray([num] * num))
 
     def _unpad(self, data):
         padding_byte = data[-1] if type(data[-1]) is int else ord(data[-1]) # bec inconsistent API?
@@ -146,7 +147,10 @@ class AxolotlManager(object):
         return data[:-padding]
 
     def encrypt(self, recipient_id, message):
-        logger.debug("encrypt(recipientid=%s, message=%s)" % (recipient_id, message))
+        # to avoid the hassle of encoding issues and associated unnecessary crashes,
+        # don't log the message content.
+        # see https://github.com/tgalal/yowsup/issues/2732
+        logger.debug("encrypt(recipientid=%s, message=[omitted])" % recipient_id)
         """
         :param recipient_id:
         :type recipient_id: str
@@ -199,7 +203,10 @@ class AxolotlManager(object):
         :return:
         :rtype:
         """
-        logger.debug("group_encrypt(groupid=%s, message=%s)" % (groupid, message))
+        # to avoid the hassle of encoding issues and associated unnecessary crashes,
+        # don't log the message content.
+        # see https://github.com/tgalal/yowsup/issues/2732
+        logger.debug("group_encrypt(groupid=%s, message=[omitted])" % groupid)
         group_cipher = self._get_group_cipher(groupid, self._username)
         return group_cipher.encrypt(message + self._generate_random_padding())
 
@@ -214,6 +221,8 @@ class AxolotlManager(object):
             raise exceptions.NoSessionException()
         except DuplicateMessageException:
             raise exceptions.DuplicateMessageException()
+        except InvalidMessageException:
+            raise exceptions.InvalidMessageException()
 
     def group_create_skmsg(self, groupid):
         logger.debug("group_create_skmsg(groupid=%s)" % groupid)
@@ -265,7 +274,6 @@ class AxolotlManager(object):
         """
         logger.debug("session_exists(%s)?" % username)
         return self._store.containsSession(username, 1)
-
 
     def load_senderkey(self, groupid):
         logger.debug("load_senderkey(groupid=%s)" % groupid)

@@ -4,16 +4,20 @@ __author__ = "Tarek Galal"
 
 from yowsup.env import YowsupEnv
 from yowsup.config.manager import ConfigManager
+from yowsup.profile.profile import YowProfile
 
 from yowsup.config.v1.config import Config
 from yowsup import logger as yowlogger, formatter
 from yowsup.layers.network.layer import YowNetworkLayer
 from yowsup.layers.protocol_media.mediacipher import MediaCipher
+from yowsup.common.tools import StorageTools
 
 from consonance.structs.publickey import PublicKey
 from consonance.structs.keypair import KeyPair
-import sys, argparse, yowsup, logging
+import sys, argparse, yowsup, logging, os
 import base64
+from google import protobuf
+import consonance, dissononce, cryptography, axolotl
 
 HELP_CONFIG = """
 ############# Yowsup Configuration Sample ###########
@@ -39,8 +43,18 @@ For the full list of configuration options run "yowsup-cli config -h"
 
 """
 
-CR_TEXT = """yowsup-cli  v{cliVersion}
+VERSIONS = """yowsup-cli  v{cliVersion}
 yowsup      v{yowsupVersion}
+"""
+VERSIONS_VERBOSE = """yowsup-cli     v{cliVersion}
+yowsup         v{yowsupVersion}
+consonance     v{consonanceVersion}
+dissononce     v{dissononceVersion}
+python-axolotl v{axolotlVersion}
+cryptography   v{cryptographyVersion}
+protobuf       v{protobufVersion}
+"""
+CR_TEXT = """{versions}
 
 Copyright (c) 2012-2019 Tarek Galal
 http://www.openwhatsapp.org
@@ -73,7 +87,7 @@ class YowArgParser(argparse.ArgumentParser):
         else:
             self._no_config = False
         super(YowArgParser, self).__init__(*args, **kwargs)
-        self._config_manager = ConfigManager() if not self._no_config else None
+        self._profile = None
         self.add_argument("-v", "--version",
                           action="store_true",
                           help="Print version info and exit"
@@ -99,10 +113,9 @@ class YowArgParser(argparse.ArgumentParser):
             )
             config_group.add_argument(
                 "-c", '--config',
-                metavar="path",
                 action="store",
-                help="(optional) Path to config file. Other configuration arguments have higher priority if given, and "
-                     "will override those specified in the config file."
+                help="(optional) Path to config file, or profile name. Other configuration arguments have higher "
+                     "priority if given, and will override those specified in the config file."
             )
             config_group.add_argument(
                 '--config-phone', '--phone',
@@ -177,7 +190,6 @@ class YowArgParser(argparse.ArgumentParser):
                 help="Chat DNS domain, normally received and persisted right after a successful login"
             )
         self.args = {}
-        self._config = None  # type: Config
 
     def getArgs(self):
         return self.parse_args()
@@ -197,73 +209,85 @@ class YowArgParser(argparse.ArgumentParser):
 
         if not self._no_config:
             config_phone = self.args["config_phone"]
-
+            config_manager = ConfigManager()
+            profile_name = None
+            config_loaded_from_profile = True
             if self.args["config"]:
-                self._config = self._config_manager.load_path(self.args["config"])
-                if self._config is None:
-                    self._config = self._config_manager.load(self.args["config"])
+                config = config_manager.load(self.args["config"])
+                if not os.path.isfile(self.args["config"]):
+                    profile_name = self.args["config"]
+                elif not self.args["config"].startswith(StorageTools.getStorageForProfile(config.phone)):
+                    config_loaded_from_profile = False
             elif config_phone:
-                self._config = self._config_manager.load(config_phone)
+                config = config_manager.load(config_phone)
             else:
                 raise ValueError("Must specify either --config or --config-phone")
 
-            if self._config is None:
-                self._config = Config()
+            if config is None:
+                config = Config()
 
             if config_phone is not None:
-                self._config.phone = config_phone
+                config.phone = config_phone
 
             if self.args["config_cc"]:
-                self._config.cc = self.args["config_cc"]
+                config.cc = self.args["config_cc"]
 
             if self.args["config_pushname"]:
-                self._config.pushname = self.args["config_pushname"]
+                config.pushname = self.args["config_pushname"]
 
             if self.args["config_id"]:
-                self._config.id = base64.b64decode(self.args["config_id"])
+                config.id = base64.b64decode(self.args["config_id"])
 
             if self.args["config_mcc"]:
-                self._config.mcc = self.args["config_mcc"]
+                config.mcc = self.args["config_mcc"]
 
             if self.args["config_mnc"]:
-                self._config.mnc = self.args["config_mnc"]
+                config.mnc = self.args["config_mnc"]
 
             if self.args["config_sim_mcc"]:
-                self._config.sim_mcc = self.args["config_sim_mcc"]
+                config.sim_mcc = self.args["config_sim_mcc"]
 
             if self.args["config_sim_mnc"]:
-                self._config.sim_mnc = self.args["config_sim_mnc"]
+                config.sim_mnc = self.args["config_sim_mnc"]
 
             if self.args["config_client_static_keypair"]:
-                self._config.client_static_keypair = KeyPair.from_bytes(
+                config.client_static_keypair = KeyPair.from_bytes(
                     base64.b64decode(self.args["config_client_static_keypair"])
                 )
 
             if self.args["config_server_static_public"]:
-                self._config.server_static_public = PublicKey(
+                config.server_static_public = PublicKey(
                     base64.b64decode(self.args["config_server_static_public"])
                 )
 
             if self.args["config_expid"]:
-                self._config.expid = base64.b64decode(self.args["config_expid"])
+                config.expid = base64.b64decode(self.args["config_expid"])
 
             if self.args["config_fdid"]:
-                self._config.fdid = self.args["config_fdid"]
+                config.fdid = self.args["config_fdid"]
 
             if self.args["config_edge_routing_info"]:
-                self._config.edge_routing_info = base64.b64decode(self.args["config_edge_routing_info"])
+                config.edge_routing_info = base64.b64decode(self.args["config_edge_routing_info"])
 
             if self.args["config_chat_dns_domain"]:
-                self._config.chat_dns_domain = self.args["config_chat_dns_domain"]
+                config.chat_dns_domain = self.args["config_chat_dns_domain"]
 
-            if self.args["config"]:
-                # config file was explicitly specified, load internal config and override values
-                internal_config = self._config_manager.load(self._config.phone)
+            if not config_loaded_from_profile:
+                # config file was explicitly specified and is not that of profile,
+                # load profile config and override values
+                internal_config = config_manager.load(config.phone, profile_only=True)
                 if internal_config is not None:
-                    for property in self._config.keys():
-                        if property != "version" and self._config[property] is not None:
-                            internal_config[property] = self._config[property]
-                    self._config = internal_config
+                    for property in config.keys():
+                        if property != "version" and config[property] is not None:
+                            internal_config[property] = config[property]
+                    config = internal_config
+
+            if self._profile is None or self._profile.config is None:
+                self._profile = YowProfile(profile_name or config.phone, config)
+
+            if self._profile.config.phone is None:
+                print("Invalid config")
+                sys.exit(1)
 
         if self.args["version"]:
             print("yowsup-cli v%s\nUsing yowsup v%s" % (__version__, yowsup.__version__))
@@ -274,7 +298,19 @@ class YowArgParser(argparse.ArgumentParser):
             sys.exit(0)
 
     def printInfoText(self):
-        print(CR_TEXT.format(cliVersion=__version__, yowsupVersion=yowsup.__version__))
+        verbose = self.args["debug"]
+        if verbose:
+            versions = VERSIONS_VERBOSE.format(
+                cliVersion=__version__, yowsupVersion=yowsup.__version__,
+                consonanceVersion=consonance.__version__,
+                dissononceVersion=dissononce.__version__,
+                axolotlVersion=axolotl.__version__,
+                cryptographyVersion=cryptography.__version__,
+                protobufVersion=protobuf.__version__
+            )
+        else:
+            versions = VERSIONS.format(cliVersion=__version__, yowsupVersion=yowsup.__version__)
+        print(CR_TEXT.format(versions=versions))
 
 
 class ConfigArgParser(YowArgParser):
@@ -284,6 +320,7 @@ class ConfigArgParser(YowArgParser):
 
         gp = self.add_argument_group("Yowsup Config Actions")
         exgp = gp.add_mutually_exclusive_group()
+        self._config_manager = ConfigManager()
 
         exgp.add_argument("-p", '--preview-config', help='Preview yowsup config', action="store",
                           choices=("json", "keyval"), required=False)
@@ -292,10 +329,10 @@ class ConfigArgParser(YowArgParser):
         super(ConfigArgParser, self).process()
         preview_format = self.args["preview_config"]
         if preview_format == "json":
-            print(self._config_manager.config_to_str(self._config, ConfigManager.TYPE_JSON))
+            print(self._config_manager.config_to_str(self._profile.config, ConfigManager.TYPE_JSON))
         elif preview_format == "keyval":
-            print(self._config_manager.config_to_str(self._config, ConfigManager.TYPE_KEYVAL))
-        elif preview_format == None:
+            print(self._config_manager.config_to_str(self._profile.config, ConfigManager.TYPE_KEYVAL))
+        elif preview_format is None:
             pass
 
         return True
@@ -324,7 +361,7 @@ class RegistrationArgParser(YowArgParser):
     def process(self):
         super(RegistrationArgParser, self).process()
 
-        config = self._config
+        config = self._profile.config
         self._encrypt = not self.args["no_encrypt"]
         self._preview = self.args["preview"]
 
@@ -360,13 +397,16 @@ class RegistrationArgParser(YowArgParser):
         self.printInfoText()
         codeReq = WACodeRequest(method, config)
         result = codeReq.send(encrypt=self._encrypt, preview=self._preview)
+        config = self._profile.config
         if not self._preview:
             if result["status"] in ("sent", "ok"):
+                if "login" in result:
+                    config.login = result["login"]
                 if "edge_routing_info" in result:
-                    self._config.edge_routing_info = base64.b64decode(result["edge_routing_info"])
+                    config.edge_routing_info = base64.b64decode(result["edge_routing_info"])
                 if "chat_dns_domain" in result:
-                    self._config.chat_dns_domain = result["chat_dns_domain"]
-                self._config_manager.save(self._config)
+                    config.chat_dns_domain = result["chat_dns_domain"]
+                self._profile.write_config(config)
             print(self.resultToString(result))
         else:
             print(config)
@@ -378,13 +418,15 @@ class RegistrationArgParser(YowArgParser):
         req = WARegRequest(config, code)
         result = req.send(preview=self._preview)
         print(config)
+        config = self._profile.config
         if not self._preview:
             if result["status"] == "ok":
+                config.login = result["login"]
                 if "edge_routing_info" in result:
-                    self._config.edge_routing_info = base64.b64decode(result["edge_routing_info"])
+                    config.edge_routing_info = base64.b64decode(result["edge_routing_info"])
                 if "chat_dns_domain" in result:
-                    self._config.chat_dns_domain = result["chat_dns_domain"]
-                self._config_manager.save(self._config)
+                    config.chat_dns_domain = result["chat_dns_domain"]
+                self._profile.write_config(self._profile.config)
 
             print(self.resultToString(result))
 
@@ -405,7 +447,8 @@ class MediaToolsArgParser(YowArgParser):
         "video": MediaCipher.INFO_VIDEO,
         "gif": MediaCipher.INFO_VIDEO,
         "document": MediaCipher.INFO_DOCUM,
-        "doc": MediaCipher.INFO_DOCUM
+        "doc": MediaCipher.INFO_DOCUM,
+        "sticker": MediaCipher.INFO_IMAGE
     }
 
     def __init__(self, *args, **kwargs):
@@ -416,7 +459,7 @@ class MediaToolsArgParser(YowArgParser):
         gp = self.add_argument_group("Media Tools")
         gp.add_argument(
             '--media-type',
-            choices=('image', 'video', 'gif', 'document', 'doc'),
+            choices=('image', 'video', 'gif', 'document', 'doc', "sticker"),
             required=True
         )
         exgp = gp.add_mutually_exclusive_group()
@@ -573,28 +616,27 @@ class DemosArgParser(YowArgParser):
             return False
         return True
 
+    def _ensure_config_props(self):
+        if self._profile.config.client_static_keypair is None:
+            print("Specified config does not have client_static_keypair, aborting")
+            sys.exit(1)
+
     def startCmdline(self):
+        self._ensure_config_props()
         logger.debug("starting cmd")
         from yowsup.demos import cli
-        credentials = self._config.phone, self._config.client_static_keypair
-        if not credentials:
-            print("Error: You must specify a configuration method")
-            sys.exit(1)
         self.printInfoText()
-        stack = cli.YowsupCliStack(credentials)
+        stack = cli.YowsupCliStack(self._profile)
         if self._layer_network_dispatcher is not None:
             stack.set_prop(YowNetworkLayer.PROP_DISPATCHER, self._layer_network_dispatcher)
         stack.start()
 
     def startEcho(self):
+        self._ensure_config_props()
         from yowsup.demos import echoclient
-        credentials = self._config.phone, self._config.client_static_keypair
-        if not credentials:
-            print("Error: You must specify a configuration method")
-            sys.exit(1)
         try:
             self.printInfoText()
-            stack = echoclient.YowsupEchoStack(credentials)
+            stack = echoclient.YowsupEchoStack(self._profile)
             if self._layer_network_dispatcher is not None:
                 stack.set_prop(YowNetworkLayer.PROP_DISPATCHER, self._layer_network_dispatcher)
             stack.start()
@@ -603,14 +645,11 @@ class DemosArgParser(YowArgParser):
             sys.exit(0)
 
     def startSendClient(self):
+        self._ensure_config_props()
         from yowsup.demos import sendclient
-        credentials = self._config.phone, self._config.client_static_keypair
-        if not credentials:
-            print("Error: You must specify a configuration method")
-            sys.exit(1)
         try:
             self.printInfoText()
-            stack = sendclient.YowsupSendStack(credentials, [([self.args["send"][0], self.args["send"][1]])])
+            stack = sendclient.YowsupSendStack(self._profile, [([self.args["send"][0], self.args["send"][1]])])
             if self._layer_network_dispatcher is not None:
                 stack.set_prop(YowNetworkLayer.PROP_DISPATCHER, self._layer_network_dispatcher)
             stack.start()
@@ -619,14 +658,11 @@ class DemosArgParser(YowArgParser):
             sys.exit(0)
 
     def startSyncContacts(self):
+        self._ensure_config_props()
         from yowsup.demos import contacts
-        credentials = self._config.phone, self._config.client_static_keypair
-        if not credentials:
-            print("Error: You must specify a configuration method")
-            sys.exit(1)
         try:
             self.printInfoText()
-            stack = contacts.YowsupSyncStack(credentials, self.args["sync"].split(','))
+            stack = contacts.YowsupSyncStack(self._profile, self.args["sync"].split(','))
             if self._layer_network_dispatcher is not None:
                 stack.set_prop(YowNetworkLayer.PROP_DISPATCHER, self._layer_network_dispatcher)
             stack.start()
@@ -635,13 +671,10 @@ class DemosArgParser(YowArgParser):
             sys.exit(0)
 
     def startMediaSink(self, storage_dir):
+        self._ensure_config_props()
         from yowsup.demos import mediasink
-        credentials = self._config.phone, self._config.client_static_keypair
-        if not credentials:
-            print("Error: You must specify a configuration method")
-            sys.exit(1)
         self.printInfoText()
-        stack = mediasink.MediaSinkStack(credentials, storage_dir)
+        stack = mediasink.MediaSinkStack(self._profile, storage_dir)
         if self._layer_network_dispatcher is not None:
             stack.set_prop(YowNetworkLayer.PROP_DISPATCHER, self._layer_network_dispatcher)
         try:
@@ -672,7 +705,17 @@ if __name__ == "__main__":
 
     mode = args[0]
     if mode == "version":
-        print("yowsup-cli v%s\nUsing yowsup v%s" % (__version__, yowsup.__version__))
+        using = {
+            "yowsup": yowsup.__version__,
+            "consonance": consonance.__version__,
+            "dissononce": dissononce.__version__,
+            "python-axolotl": axolotl.__version__,
+            "cryptography": cryptography.__version__,
+            "protobuf": protobuf.__version__
+        }
+        print("yowsup-cli v%s" % __version__)
+        print("using:")
+        print("  " + ("\n  ".join(["%s v%s" % (pkg, version) for pkg,version in using.items()])))
         sys.exit(0)
     else:
         parser = modeDict[mode]()
