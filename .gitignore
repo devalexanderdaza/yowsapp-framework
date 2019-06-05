@@ -1,21 +1,12 @@
-commit.sh
-add.sh
-
 .idea/
 .9
 __pycache__
 
 build
-app/build/
-app/dist/
-app/mac_bot.egg-info/
-app/assets/*
 config.py
-whatsapp_login.sh
-libs/yowsup.egg-info
-libs/yowsup
-cli.txt
-tags.txt
+libs/yowsup/
+libs/yowsup.egg-info/
+libs/build/
 
 # modules
 modules/misdatos
