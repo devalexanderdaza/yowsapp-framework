@@ -20,6 +20,9 @@ _This needs **Python >= 2.7 and <=3.7**_
 2. Run yowsapp_installer.sh (Most likely on sudo since its going to install some libraries)
 ```sh
 > sudo ./yowsapp_installer.sh
+
+OR IF YOU ARE MAC USER
+> sudo ./yowsapp_installer_osx.sh
 ```
 3. Register your phone and get a password with like this:
 `The process of registering the telephone line will be done within the execution of the file yowsapp_installer.sh`
