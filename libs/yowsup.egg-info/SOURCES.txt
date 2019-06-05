@@ -1,0 +1,5 @@
+yowsup.egg-info/PKG-INFO
+yowsup.egg-info/SOURCES.txt
+yowsup.egg-info/dependency_links.txt
+yowsup.egg-info/requires.txt
+yowsup.egg-info/top_level.txt
