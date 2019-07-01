@@ -15,7 +15,7 @@ from app.utils import helper
 import json
 
 # Uncomment to log
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Config
 credentials = config.credentials['phone'], KeyPair.from_bytes(base64.b64decode(config.credentials['password']))

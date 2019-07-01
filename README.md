@@ -1,5 +1,10 @@
 # Yowsapp Framework 
 
+---
+## WARNING
+It seems that recently yowsup gets detected during registration resulting in an instant ban for your number right after registering with the code you receive by sms/voice. I'd strongly recommend to not attempt registration through yowsup until I look further into this. Follow the status of this [here](https://github.com/tgalal/yowsup/issues/2829).
+---
+
 
 
 ###### [DONATE HERE](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=55HW9CL6HLWGS&source=url)
